@@ -9,11 +9,10 @@ import numpy as np
 # of arrays, each representing the attributes of an example,
 # with the attributes in the same order for each example.
 #
-# the gain_function parameter
+# the gain_function parameter must be one of "gini", "max error", or "info gain"
+#
+# If one would rather not specify a max_depth, set it equal to -1.
 def categorical_id3(values, labels, gain_function, max_depth):
-    if max_depth < 0:
-        raise Exception("Must have positive max_depth!")
-
     if gain_function != "gini" and gain_function != "max error" and gain_function != "info gain":
         raise Exception("Gain function must be equal to \"gini\", \"max error\", or \"info gain\"")
 
@@ -26,7 +25,7 @@ def categorical_id3(values, labels, gain_function, max_depth):
             all_attributes[i].add(values[i][j])
 
     return tree.DecisionTree(
-        __recurs_categorical_id3(values, labels, gain_function, max_depth, range(len(values)), all_attributes))
+        __recurs_categorical_id3(values, labels, gain_function, max_depth, range(len(values[0])), all_attributes))
 
 
 # recursive helper function for categorical_id3
@@ -117,7 +116,7 @@ def __recurs_categorical_id3(values, labels, gain_function, max_depth, attribute
 
     for attr_value in attribute_values[best_attribute]:
         # if S_V is empty, add a leaf node with most common label
-        if len(values[attr_value]) == 0:
+        if len(values_v[attr_value]) == 0:
             root.next_nodes[attr_value] = tree.DecisionNode(True, -1, max_label)
         else:
             root.next_nodes[attr_value] = __recurs_categorical_id3(values_v[attr_value], labels_v[attr_value],
@@ -141,7 +140,7 @@ def information_gain(p_values, p_v_values, size_values):
 
     result = h(p_values)
     for v in range(len(p_v_values)):
-        result -= size_values*h(p_v_values[v])
+        result -= size_values[v]*h(p_v_values[v])
 
     return result
 
@@ -156,7 +155,7 @@ def majority_error_gain(p_values, p_v_values, size_values):
 
     result = h(p_values)
     for v in range(len(p_v_values)):
-        result -= size_values*h(p_v_values[v])
+        result -= size_values[v]*h(p_v_values[v])
 
     return result
 
@@ -174,6 +173,6 @@ def gini_index_gain(p_values, p_v_values, size_values):
 
     result = h(p_values)
     for v in range(len(p_v_values)):
-        result -= size_values*h(p_v_values[v])
+        result -= size_values[v]*h(p_v_values[v])
 
     return result

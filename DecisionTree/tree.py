@@ -11,18 +11,6 @@
 # if attribute = 0 and our data is such that the 0th attribute is
 # eye color, this node's dictionary may have key values "blue", "green", etc.
 class DecisionNode:
-    # next_nodes is a dictionary from attribute values to other nodes in the tree
-    # in the case that this node is a leaf node, next_nodes is empty
-    next_nodes = {}
-
-    # stores which attribute this (non-leaf) node is tracking
-    attribute = 0
-
-    # if this node is a leaf, this stores the output label
-    leaf_label = ""
-
-    # is true iff this node is a leaf node
-    is_leaf_node = False
 
     # Initializes a node which is root by default.
     # If this node is not a leaf node, initializes the node
@@ -30,6 +18,17 @@ class DecisionNode:
     #
     # If this node is a leaf node, initializes it with the given label.
     def __init__(self, is_leaf_node, attribute_int, label):
+        # next_nodes is a dictionary from attribute values to other nodes in the tree
+        # in the case that this node is a leaf node, next_nodes is empty
+        self.next_nodes = {}
+
+        # stores which attribute this (non-leaf) node is tracking
+        self.attribute = 0
+
+        # if this node is a leaf, this stores the output label
+        self.leaf_label = ""
+
+        # is true iff this node is a leaf node
         self.is_leaf_node = is_leaf_node
         if is_leaf_node:
             self.leaf_label = label
@@ -44,7 +43,6 @@ class DecisionNode:
     def evaluate(self, input_data):
         if self.is_leaf_node:
             return self.leaf_label
-
         return self.next_nodes[input_data[self.attribute]].evaluate(input_data)
 
 
@@ -54,7 +52,6 @@ class DecisionNode:
 # the nodes are well formed, so we don't want the
 # user to be able to mess with it.
 class DecisionTree:
-    root = None
 
     def __init__(self, root):
         self.root = root
