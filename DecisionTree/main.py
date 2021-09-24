@@ -49,6 +49,8 @@ def main():
     print(my_id3_tree.evaluate(test))
     test = ["1", "1", "1", "0"] # 0
     print(my_id3_tree.evaluate(test))
+    test = ["1", "0", "1", "0"] # 0
+    print(my_id3_tree.evaluate(test))
 
 
 if __name__ == "__main__":
