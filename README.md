@@ -1,1 +1,1 @@
-# CS-5350-Fall-2021
+# This is a machine learning library developed by Emil Geisler for CS5350/6350 at the University of Utah
