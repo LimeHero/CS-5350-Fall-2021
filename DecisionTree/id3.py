@@ -9,27 +9,29 @@ import numpy as np
 # of arrays, each representing the attributes of an example,
 # with the attributes in the same order for each example.
 #
-# the gain_function parameter must be one of "gini", "max error", or "info gain"
+# the gain_function parameter must be one of "gini", "maj error", or "info gain"
 #
 # If one would rather not specify a max_depth, set it equal to -1.
-def categorical_id3(values, labels, gain_function, max_depth):
-    if gain_function != "gini" and gain_function != "max error" and gain_function != "info gain":
-        raise Exception("Gain function must be equal to \"gini\", \"max error\", or \"info gain\"")
+def id3(values, labels, gain_function, max_depth):
+    if gain_function != "gini" and gain_function != "maj error" and gain_function != "info gain":
+        raise Exception("Gain function must be equal to \"gini\", \"maj error\", or \"info gain\"")
 
     # keeps track of all of the attribute values for each attribute
     # so the tree formed is "complete".
     all_attributes = []
-    for i in range(len(values)):
+    for j in range(len(values[0])):
         all_attributes.append(set())
+
+    for i in range(len(values)):
         for j in range(len(values[0])):
-            all_attributes[i].add(values[i][j])
+            all_attributes[j].add(values[i][j])
 
     return tree.DecisionTree(
         __recurs_categorical_id3(values, labels, gain_function, max_depth, range(len(values[0])), all_attributes))
 
 
-# recursive helper function for categorical_id3
-def __recurs_categorical_id3(values, labels, gain_function, max_depth, attributes, attribute_values):
+# recursive helper function for id3 function
+def __recurs_id3(values, labels, gain_function, max_depth, attributes, attribute_values):
     label_frequencies = {}
     # calculate label frequencies
     for label in labels:
@@ -42,7 +44,7 @@ def __recurs_categorical_id3(values, labels, gain_function, max_depth, attribute
     for label in label_frequencies.keys():
         if label_frequencies[label] > max_label_freq:
             max_label_freq = label_frequencies[label]
-        max_label = label
+            max_label = label
 
     if max_depth == 0 or len(attributes) == 0 or len(label_frequencies.keys()) == 1:
         return tree.DecisionNode(True, -1, max_label)
@@ -53,7 +55,7 @@ def __recurs_categorical_id3(values, labels, gain_function, max_depth, attribute
 
     # pick the attribute with maximum gain
     max_gain = -1
-    best_attribute = ""
+    best_attribute = -1
     for attr in attributes:
         # attr_label_frequencies[value] is the frequencies of the labels
         # among the examples with attribute = value
@@ -91,7 +93,7 @@ def __recurs_categorical_id3(values, labels, gain_function, max_depth, attribute
         if gain_function == "info gain":
             gain = information_gain(p_values, p_v_values, size_values)
 
-        if gain_function == "max error":
+        if gain_function == "maj error":
             gain = majority_error_gain(p_values, p_v_values, size_values)
 
         if gain_function == "gini":
@@ -135,7 +137,7 @@ def information_gain(p_values, p_v_values, size_values):
     def h(p_values_):
         result_ = 0.0
         for p in p_values_:
-            result_ -= np.log2(p)
+            result_ -= p*np.log2(p)
         return result_
 
     result = h(p_values)
@@ -149,7 +151,7 @@ def information_gain(p_values, p_v_values, size_values):
 # p_v_values represent the proportion of each label in S_v
 # size_values represents the ratios |S_v|/|S| to normalize the gain
 def majority_error_gain(p_values, p_v_values, size_values):
-    # max error function
+    # maj error function
     def h(p_values_):
         return 1.0 - max(p_values_)
 
