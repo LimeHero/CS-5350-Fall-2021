@@ -27,7 +27,7 @@ def id3(values, labels, gain_function, max_depth):
             all_attributes[j].add(values[i][j])
 
     return tree.DecisionTree(
-        __recurs_categorical_id3(values, labels, gain_function, max_depth, range(len(values[0])), all_attributes))
+        __recurs_id3(values, labels, gain_function, max_depth, range(len(values[0])), all_attributes))
 
 
 # recursive helper function for id3 function
@@ -121,7 +121,7 @@ def __recurs_id3(values, labels, gain_function, max_depth, attributes, attribute
         if len(values_v[attr_value]) == 0:
             root.next_nodes[attr_value] = tree.DecisionNode(True, -1, max_label)
         else:
-            root.next_nodes[attr_value] = __recurs_categorical_id3(values_v[attr_value], labels_v[attr_value],
+            root.next_nodes[attr_value] = __recurs_id3(values_v[attr_value], labels_v[attr_value],
                                                                    gain_function, max_depth-1,
                                                                    [x for x in attributes if x != best_attribute],
                                                                    attribute_values)
