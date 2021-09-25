@@ -2,6 +2,7 @@ import id3
 
 
 def main():
+    car_test()
     bank_test()
 
 
@@ -100,6 +101,9 @@ def car_test():
     print()
     print("car on training data:")
     test_results(train_values, train_labels, train_values, train_labels, 6)
+    print()
+    print()
+    print()
 
 
 # to run the experiments for the assignment, question 2
@@ -130,6 +134,9 @@ def bank_test():
     print()
     print("bank on training data:")
     test_results(train_values, train_labels, train_values, train_labels, 16)
+    print()
+    print()
+    print()
 
 
 # categorizes the bank values arrays.
@@ -234,14 +241,14 @@ def test_results(train_values, train_labels, test_values, test_labels, max_max_d
 
             accuracy = correct_num / (correct_num + incorrect_num)
             accuracy_mean += accuracy
-            print("max depth: " + str(max_depth))
-            print("gain function: " + gain_function)
-            print("correct number: " + str(correct_num))
-            print("incorrect number: " + str(incorrect_num))
-            print("accuracy: " + str(accuracy))
-            print()
-
+            # print("max depth: " + str(max_depth))
+            # print("gain function: " + gain_function)
+            # print("correct number: " + str(correct_num))
+            # print("incorrect number: " + str(incorrect_num))
+            # print("accuracy: " + str(accuracy))
+            # print()
         print("average accuracy: " + str(accuracy_mean/max_max_depth))
+        print("with " + gain_function)
 
 
 if __name__ == "__main__":
