@@ -39,6 +39,7 @@ def __recurs_id3(values, labels, gain_function, max_depth, attributes, attribute
             label_frequencies[label] = 0
         label_frequencies[label] += 1
 
+    # identify the maximum label
     max_label_freq = 0
     max_label = ""
     for label in label_frequencies.keys():
@@ -46,6 +47,7 @@ def __recurs_id3(values, labels, gain_function, max_depth, attributes, attribute
             max_label_freq = label_frequencies[label]
             max_label = label
 
+    # base case: return leaf node
     if max_depth == 0 or len(attributes) == 0 or len(label_frequencies.keys()) == 1:
         return tree.DecisionNode(True, -1, max_label)
 
