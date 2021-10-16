@@ -24,8 +24,8 @@ The parameters are:
 
     gain_function: must be one of "gini", "maj error", or "info gain".
 
-    max_depth: the maximum depth of the tree. Must be >= 0. If max_depth
-    is equal to 1, the algorithm will return a decision stump.
+    max_depth: the maximum depth of the tree. Must be an integer >= 0. 
+    If max_depth is equal to 1, the algorithm will return a decision stump.
 
 To use a DecisionTree object (returned from id3), use the following syntax:
 
