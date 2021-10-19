@@ -1,6 +1,5 @@
 import id3
 
-
 def main():
     car_test()
     bank_test()

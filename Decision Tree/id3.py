@@ -88,7 +88,7 @@ def __recurs_id3(values, labels, gain_function, max_depth, attributes, attribute
             size_values.append(num_value / len(labels))
 
             for label in attr_label_frequencies[value].keys():
-                p_v_values[len(p_v_values)-1].append(attr_label_frequencies[value][label] / num_value)
+                p_v_values[len(p_v_values) - 1].append(attr_label_frequencies[value][label] / num_value)
 
         # calculate the gain
         gain = 0
@@ -124,9 +124,9 @@ def __recurs_id3(values, labels, gain_function, max_depth, attributes, attribute
             root.next_nodes[attr_value] = tree.DecisionNode(True, -1, max_label)
         else:
             root.next_nodes[attr_value] = __recurs_id3(values_v[attr_value], labels_v[attr_value],
-                                                                   gain_function, max_depth-1,
-                                                                   [x for x in attributes if x != best_attribute],
-                                                                   attribute_values)
+                                                       gain_function, max_depth - 1,
+                                                       [x for x in attributes if x != best_attribute],
+                                                       attribute_values)
 
     return root
 
@@ -139,12 +139,12 @@ def information_gain(p_values, p_v_values, size_values):
     def h(p_values_):
         result_ = 0.0
         for p in p_values_:
-            result_ -= p*np.log2(p)
+            result_ -= p * np.log2(p)
         return result_
 
     result = h(p_values)
     for v in range(len(p_v_values)):
-        result -= size_values[v]*h(p_v_values[v])
+        result -= size_values[v] * h(p_v_values[v])
 
     return result
 
@@ -159,7 +159,7 @@ def majority_error_gain(p_values, p_v_values, size_values):
 
     result = h(p_values)
     for v in range(len(p_v_values)):
-        result -= size_values[v]*h(p_v_values[v])
+        result -= size_values[v] * h(p_v_values[v])
 
     return result
 
@@ -172,11 +172,11 @@ def gini_index_gain(p_values, p_v_values, size_values):
     def h(p_values_):
         result_ = 1.0
         for p in p_values_:
-            result_ -= p*p
+            result_ -= p * p
         return result_
 
     result = h(p_values)
     for v in range(len(p_v_values)):
-        result -= size_values[v]*h(p_v_values[v])
+        result -= size_values[v] * h(p_v_values[v])
 
     return result
