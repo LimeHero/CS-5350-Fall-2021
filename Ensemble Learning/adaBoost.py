@@ -1,6 +1,52 @@
 import numpy as np
 
 
+# Runs ada_boost with the given values and labels
+# and returns a stump forest with iterations number of stumps.
+def ada_boost(values, labels, gain_function, iterations):
+    stump_forest = StumpForest()
+    weights = [1] * len(values)
+    for i in range(iterations):
+        next_stump = DecisionStump()
+        vote_const = next_stump.ada_boost_initialization(values, labels, gain_function, weights)
+        stump_forest.add_stump(next_stump, vote_const)
+
+    return stump_forest
+
+# a collection of stumps with weighted votes,
+# used as the output of adaboost
+class StumpForest:
+    def __init__(self):
+        self.weights = []
+        self.stumps = []
+
+    # add a stump to the forest
+    def add_stump(self, stump, weight):
+        self.weights.append(weight)
+        self.stumps.append(stump)
+
+    # evaluates the weighted vote of the stumps
+    # must be a categorical label in this implementation
+    def evaluate(self, values):
+        label_count = {}
+        for i in range(len(self.stumps)):
+            label = self.stumps[i].evaluate(values)
+
+            if label not in label_count:
+                label_count[label] = 0
+
+            label_count[label] += self.weights[i]
+
+        max_label_count = 0
+        best_label = ""
+        for label in label_count.keys():
+            if label_count[label] > max_label_count:
+                best_label = label
+                max_label_count = max_label_count
+
+        return best_label
+
+
 # An implementation of a DecisionStump that
 # supports weighted training examples.
 #
@@ -13,12 +59,36 @@ import numpy as np
 # the weights of the different training examples.
 class DecisionStump:
 
-    # initializes the decision stump such that it chooses the optimal
+    # initializes the decision stump with empty variables
+    # note that the decision stump is *not* well formed after
+    # this initialization.
+    #
+    # This class is built to use in ada_boost, and so the initialization
+    # of the stump should be ran in ada_boost_initialization
+    def __init__(self):
+        self.map = {}  # defines the "leaf nodes" of this stump, so map[attribute] = label
+        self.feature = None  # the feature (integer) this stump splits on
+        self.is_numeric = False  # whether or not the feature is numeric
+        self.median = None  # if the feature is numeric, this is the median training value
+
+    # in the given values and labels, selects the best
     # feature to split the data and then splits on that feature.
     #
     # supports weighted training examples, but the numeric attributes
     # should have already been parsed to a numeric - should not be a string.
-    def __init__(self, values, labels, gain_function, weights):
+    #
+    # the weights array changes how much each training example should be weighted
+    # so the ith training example is counted weights[i] times
+    #
+    # note that the weights array should be normalized so that the sum
+    # is equal to len(values), instead of 1. This is to save some unnecessary
+    # possible rounding error
+    #
+    # returns the "vote constant" for this stump, which is defined to be the value
+    # .5 * ln((1-err)/err) where err is the error computed for this stump.
+    #
+    # additionally, updates the weight array as necessary
+    def ada_boost_initialization(self, values, labels, gain_function, weights):
         self.map = {}
         if gain_function != "gini" and gain_function != "maj error" and gain_function != "info gain":
             raise Exception("Gain function must be equal to \"gini\", \"maj error\", or \"info gain\"")
@@ -70,7 +140,7 @@ class DecisionStump:
                 if not (labels[i] in attr_label_frequencies[value]):
                     attr_label_frequencies[value][labels[i]] = 0
 
-                attr_label_frequencies[value][labels[i]] += 1
+                attr_label_frequencies[value][labels[i]] += weights[i]  # weighted sum
 
             # calculate p_v_values and size_values from frequencies
             p_v_values = []
@@ -134,6 +204,26 @@ class DecisionStump:
                     most_freq_label = label
 
             self.map[value] = most_freq_label
+
+        # compute the error and vote constant
+        error = 0
+        for i in range(len(labels)):
+            if labels[i] != self.evaluate(values):
+                error += weights[i]
+        vote_constant = np.log((1 - error) / error) / 2
+
+        # update the weights array
+        for i in range(len(weights)):
+            if weights[i] != self.evaluate(values):
+                weights[i] *= np.exp(np.e, vote_constant)
+            else:
+                weights[i] *= np.exp(np.e, -vote_constant)
+
+        norm = sum(weights)
+        for i in range(len(weights)):
+            weights[i] /= norm
+
+        return vote_constant
 
     # Returns this decision stump evaluated on the given list of features
     def evaluate(self, values):
