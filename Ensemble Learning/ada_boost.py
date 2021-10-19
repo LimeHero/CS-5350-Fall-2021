@@ -5,16 +5,46 @@ import numpy as np
 # and returns a stump forest with "iterations" number of stumps.
 #
 # gain_function must be one of "gini", "maj error", or "info gain"
-def ada_boost(values, labels, gain_function, iterations):
+#
+# if print_info is True, train_values and train_labels must be provided,
+# in which case ada_boost will print the train and test accuracies on each generation
+# along with the individual stump weighted accuracy and test accuracy
+def ada_boost(values, labels, gain_function, iterations, print_info=False, test_values=None, test_labels=None):
     if gain_function != "gini" and gain_function != "maj error" and gain_function != "info gain":
         raise Exception("Gain function must be equal to \"gini\", \"maj error\", or \"info gain\"")
 
+    if print_info:
+        print("iteration,stump weighted error,stump test error,training error,test error,")
     stump_forest = StumpForest()
     weights = [1] * len(values)
     for i in range(iterations):
+        if print_info:
+            print(i, end=",")
         next_stump = DecisionStump()
-        vote_const = next_stump.ada_boost_initialization(values, labels, gain_function, weights)
+        vote_const = next_stump.ada_boost_initialization(values, labels, gain_function, weights, print_info=print_info)
         stump_forest.add_stump(next_stump, vote_const)
+
+        if print_info:
+            # stump test error
+            num_right = 0
+            for j in range(len(test_values)):
+                if next_stump.evaluate(test_values[j]) != test_labels[j]:
+                    num_right += 1
+            print(num_right / len(test_values), end=",")
+
+            # train error
+            num_right = 0
+            for j in range(len(values)):
+                if stump_forest.evaluate(values[j]) != labels[j]:
+                    num_right += 1
+            print(num_right / len(values), end=",")
+
+            # test error
+            num_right = 0
+            for j in range(len(test_values)):
+                if stump_forest.evaluate(test_values[j]) != test_labels[j]:
+                    num_right += 1
+            print(num_right / len(test_values))
 
     return stump_forest
 
@@ -48,7 +78,7 @@ class StumpForest:
         for label in label_count.keys():
             if label_count[label] > max_label_count:
                 best_label = label
-                max_label_count = max_label_count
+                max_label_count = label_count[label]
 
         return best_label
 
@@ -94,17 +124,17 @@ class DecisionStump:
     # .5 * ln((1-err)/err) where err is the error computed for this stump.
     #
     # additionally, updates the weight array as necessary
-    def ada_boost_initialization(self, values, labels, gain_function, weights):
-        self.map = {}
+    def ada_boost_initialization(self, values, labels, gain_function, weights, print_info=False):
         if gain_function != "gini" and gain_function != "maj error" and gain_function != "info gain":
             raise Exception("Gain function must be equal to \"gini\", \"maj error\", or \"info gain\"")
 
         label_frequencies = {}
         # calculate label frequencies
-        for label in labels:
+        for i in range(len(labels)):
+            label = labels[i]
             if not (label in label_frequencies):
                 label_frequencies[label] = 0
-            label_frequencies[label] += 1
+            label_frequencies[label] += weights[i]
 
         p_values = []
         for label in label_frequencies.keys():
@@ -118,8 +148,9 @@ class DecisionStump:
         for attr in range(len(values[0])):
             # numeric keeps track of whether this feature is categorical (string) or numerical
             # we assume that strings and numerics are the only attributes passed in
-            numeric[attr] = not type(values[0]) == str
+            numeric[attr] = not type(values[0][attr]) == str
 
+            # get median if numeric attribute
             if numeric[attr]:
                 sorted_attributes = []
                 for i in range(len(labels)):
@@ -162,7 +193,7 @@ class DecisionStump:
                 size_values.append(num_value / len(labels))
 
                 for label in attr_label_frequencies[value].keys():
-                    p_v_values[len(p_v_values) - 1].append(attr_label_frequencies[value][label] / num_value)
+                    p_v_values[-1].append(attr_label_frequencies[value][label] / num_value)
 
             # calculate the gain
             gain = 0
@@ -208,6 +239,7 @@ class DecisionStump:
             for label in best_attr_label_frequencies[value].keys():
                 if best_attr_label_frequencies[value][label] > freq:
                     most_freq_label = label
+                    freq = best_attr_label_frequencies[value][label]
 
             self.map[value] = most_freq_label
 
@@ -218,6 +250,8 @@ class DecisionStump:
                 error += weights[i]
 
         error /= len(labels)
+        if print_info:
+            print(error, end=",")
         vote_constant = np.log((1 - error) / error) / 2
 
         # update the weights array
@@ -227,9 +261,9 @@ class DecisionStump:
             else:
                 weights[i] *= np.e ** (-vote_constant)
 
-        norm = sum(weights)
+        norm = len(labels)/sum(weights)
         for i in range(len(weights)):
-            weights[i] /= norm
+            weights[i] *= norm
 
         return vote_constant
 
