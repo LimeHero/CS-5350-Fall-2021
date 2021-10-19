@@ -2,8 +2,13 @@ import numpy as np
 
 
 # Runs ada_boost with the given values and labels
-# and returns a stump forest with iterations number of stumps.
+# and returns a stump forest with "iterations" number of stumps.
+#
+# gain_function must be one of "gini", "maj error", or "info gain"
 def ada_boost(values, labels, gain_function, iterations):
+    if gain_function != "gini" and gain_function != "maj error" and gain_function != "info gain":
+        raise Exception("Gain function must be equal to \"gini\", \"maj error\", or \"info gain\"")
+
     stump_forest = StumpForest()
     weights = [1] * len(values)
     for i in range(iterations):
@@ -12,6 +17,7 @@ def ada_boost(values, labels, gain_function, iterations):
         stump_forest.add_stump(next_stump, vote_const)
 
     return stump_forest
+
 
 # a collection of stumps with weighted votes,
 # used as the output of adaboost
@@ -107,8 +113,8 @@ class DecisionStump:
         # pick the attribute with maximum gain
         max_gain = -1
         best_attribute = -1
-        numeric = [] * len(values[0])
-        medians = [] * len(values[0])
+        numeric = [False] * len(values[0])
+        medians = [0] * len(values[0])
         for attr in range(len(values[0])):
             # numeric keeps track of whether this feature is categorical (string) or numerical
             # we assume that strings and numerics are the only attributes passed in
@@ -193,14 +199,14 @@ class DecisionStump:
             if not (labels[i] in best_attr_label_frequencies[value]):
                 best_attr_label_frequencies[value][labels[i]] = 0
 
-            best_attr_label_frequencies[value][labels[i]] += 1
+            best_attr_label_frequencies[value][labels[i]] += weights[i]
 
         # complete the stump so each leaf is the most frequent label in that subtree
         for value in best_attr_label_frequencies.keys():
             most_freq_label = ""
             freq = -1
             for label in best_attr_label_frequencies[value].keys():
-                if best_attr_label_frequencies[values][label] > freq:
+                if best_attr_label_frequencies[value][label] > freq:
                     most_freq_label = label
 
             self.map[value] = most_freq_label
@@ -208,16 +214,18 @@ class DecisionStump:
         # compute the error and vote constant
         error = 0
         for i in range(len(labels)):
-            if labels[i] != self.evaluate(values):
+            if labels[i] != self.evaluate(values[i]):
                 error += weights[i]
+
+        error /= len(labels)
         vote_constant = np.log((1 - error) / error) / 2
 
         # update the weights array
         for i in range(len(weights)):
-            if weights[i] != self.evaluate(values):
-                weights[i] *= np.exp(np.e, vote_constant)
+            if labels[i] != self.evaluate(values[i]):
+                weights[i] *= np.e ** vote_constant
             else:
-                weights[i] *= np.exp(np.e, -vote_constant)
+                weights[i] *= np.e ** (-vote_constant)
 
         norm = sum(weights)
         for i in range(len(weights)):

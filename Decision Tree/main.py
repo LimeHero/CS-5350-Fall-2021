@@ -1,5 +1,6 @@
 import id3
 
+
 def main():
     car_test()
     bank_test()
@@ -141,14 +142,14 @@ def bank_test():
 # categorizes the bank values arrays.
 # extremely specific to this data set
 def process_bank_attributes(train_values, test_values):
-    numeric_attributes = [0, 5, 9, 11, 12, 14] # 13 is handled separately
+    numeric_attributes = [0, 5, 9, 11, 12, 14]  # 13 is handled separately
     for num_attr in numeric_attributes:
         nth_attribute = []
         for i in range(len(train_values)):
             train_values[i][num_attr] = int(train_values[i][num_attr])
             nth_attribute.append(train_values[i][num_attr])
         nth_attribute.sort()
-        median = nth_attribute[int(len(nth_attribute)/2)]
+        median = nth_attribute[int(len(nth_attribute) / 2)]
 
         for i in range(len(train_values)):
             if train_values[i][num_attr] <= median:
@@ -169,7 +170,7 @@ def process_bank_attributes(train_values, test_values):
         if train_values[i][13] >= 0:
             nth_attribute.append(train_values[i][13])
     nth_attribute.sort()
-    median = nth_attribute[int(len(nth_attribute)/2)]
+    median = nth_attribute[int(len(nth_attribute) / 2)]
 
     for i in range(len(train_values)):
         if train_values[i][13] < 0:
@@ -227,7 +228,7 @@ def test_results(train_values, train_labels, test_values, test_labels, max_max_d
     gain_functions = ["gini", "info gain", "maj error"]
     for gain_function in gain_functions:
         accuracy_mean = 0
-        for max_depth in range(1, max_max_depth+1):
+        for max_depth in range(1, max_max_depth + 1):
             id3_tree = id3.id3(train_values, train_labels, gain_function, max_depth)
 
             correct_num = 0
@@ -246,7 +247,7 @@ def test_results(train_values, train_labels, test_values, test_labels, max_max_d
             # print("incorrect number: " + str(incorrect_num))
             # print("accuracy: " + str(accuracy))
             # print()
-        print("average accuracy: " + str(accuracy_mean/max_max_depth))
+        print("average accuracy: " + str(accuracy_mean / max_max_depth))
         print("with " + gain_function)
 
 
