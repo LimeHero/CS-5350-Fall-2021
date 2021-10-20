@@ -1,4 +1,8 @@
 import ada_boost
+# import sys
+# sys.path.insert(0, '/CS-5350-Fall-2021/DecisionTree/')
+# from DecisionTree import tree
+# from DecisionTree import id3
 
 
 def main():
@@ -15,7 +19,7 @@ def main():
 
     # stump_forest = ada_boost.ada_boost(x_values, x_labels, "info gain", 50, print_info=False, test_values=x_values,
     #                                    test_labels=x_labels)
-    print("Ensemble Learning Test:")
+    print("EnsembleLearning Test:")
     bank_test()
 
 

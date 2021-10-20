@@ -1,3 +1,5 @@
+import random
+
 import tree
 import numpy as np
 
@@ -12,26 +14,32 @@ import numpy as np
 # the gain_function parameter must be one of "gini", "maj error", or "info gain"
 #
 # If one would rather not specify a max_depth, set it equal to -1.
-def id3(values, labels, gain_function, max_depth):
+# attr_subset_size is used by random forests, so on each node
+# a subset of this size of the attributes is used. -1 signifies no such variable.
+#
+# setting the all_attributes parameter should be used if the values set does not
+# contain all the possible attribute values (i.e., if we are training with a subset of the data)
+def id3(values, labels, gain_function, max_depth=-1, attr_subset_size=-1, all_attributes=None):
     if gain_function != "gini" and gain_function != "maj error" and gain_function != "info gain":
         raise Exception("Gain function must be equal to \"gini\", \"maj error\", or \"info gain\"")
 
-    # keeps track of all of the attribute values for each attribute
-    # so the tree formed is "complete".
-    all_attributes = []
-    for j in range(len(values[0])):
-        all_attributes.append(set())
-
-    for i in range(len(values)):
+    if all_attributes is None:
+        # keeps track of all of the attribute values for each attribute
+        # so the tree formed is "complete".
+        all_attributes = []
         for j in range(len(values[0])):
-            all_attributes[j].add(values[i][j])
+            all_attributes.append(set())
+
+        for i in range(len(values)):
+            for j in range(len(values[0])):
+                all_attributes[j].add(values[i][j])
 
     return tree.DecisionTree(
-        __recurs_id3(values, labels, gain_function, max_depth, range(len(values[0])), all_attributes))
+        __recurs_id3(values, labels, gain_function, max_depth, range(len(values[0])), all_attributes, attr_subset_size))
 
 
 # recursive helper function for id3 function
-def __recurs_id3(values, labels, gain_function, max_depth, attributes, attribute_values):
+def __recurs_id3(values, labels, gain_function, max_depth, attributes, attribute_values, attr_subset_size):
     label_frequencies = {}
     # calculate label frequencies
     for label in labels:
@@ -55,10 +63,17 @@ def __recurs_id3(values, labels, gain_function, max_depth, attributes, attribute
     for label in label_frequencies.keys():
         p_values.append(label_frequencies[label] / len(labels))
 
+    if attr_subset_size > 0:
+        attr_subset = random.sample(attributes, min(attr_subset_size, len(attributes)))
     # pick the attribute with maximum gain
     max_gain = -1
     best_attribute = -1
     for attr in attributes:
+        # only consider the given attributes
+        if attr_subset_size > 0:
+            if attr not in attr_subset:
+                continue
+
         # attr_label_frequencies[value] is the frequencies of the labels
         # among the examples with attribute = value
         attr_label_frequencies = {}
@@ -126,7 +141,7 @@ def __recurs_id3(values, labels, gain_function, max_depth, attributes, attribute
             root.next_nodes[attr_value] = __recurs_id3(values_v[attr_value], labels_v[attr_value],
                                                        gain_function, max_depth - 1,
                                                        [x for x in attributes if x != best_attribute],
-                                                       attribute_values)
+                                                       attribute_values, attr_subset_size)
 
     return root
 
