@@ -5,55 +5,79 @@
 #
 # descent_type must be either "sgd" or "grad",
 # which stands for (regular) gradient descent
-def lms(values, labels, r, descent_type="sgd", print_info=False, test_values=None, test_labels=None):
+import random
+
+
+def lms(values, labels, r, descent_type="sgd", print_info=False):
     if descent_type != "sgd" and descent_type != "grad":
         raise Exception("descent_type must be equal to \"sgd\" or \"grad\"")
 
-    w = [0]*len(values[0])
+    w = [0] * (len(values[0]) + 1)
     # value of w in the previous step to check for convergence
-    w_ = [1]*len(values[0])
+    w_ = [1] * len(w)
 
-    # the index of the next example, if using sgd
-    index = -1
+    num_gen = 0
     while True:
-        index += 1
-        if index == len(labels):
-            index = 0
+        num_gen += 1
 
         diff = 0
         for i in range(len(w)):
             diff += (w[i] - w_[i]) ** 2
 
-        if diff < .00001:
+        # if print_info:
+        # print("convergence: " + str(diff))
+
+        cost = 0
+        for j in range(len(values)):
+            dot_prod = 0
+            for i in range(len(values[j])):
+                dot_prod += w[i] * values[j][i]
+            dot_prod += w[-1]
+            cost += (labels[j] - dot_prod) ** 2
+
+        #if diff < .0000000000000001:
+        #    break
+
+        if cost < 29.965:
             break
 
-        w_ = w
+        if print_info and num_gen % 100 == 0:
+            print(str(num_gen) + "," + str(cost))
 
-        gradient = [0]*len(w)
+        w_ = w.copy()
+
+        gradient = [0] * len(w)
         if descent_type == "sgd":
-            gradient = lms_gradient(w, values[index], labels[index])
+            index = random.randrange(len(values))
+            gradient = lms_neg_gradient(w, values[index], labels[index])
 
         if descent_type == "grad":
             for i in range(len(labels)):
-                next_grad = lms_gradient(w, values[i], labels[i])
-                for j in range(len(w)):
+                next_grad = lms_neg_gradient(w, values[i], labels[i])
+                for j in range(len(next_grad)):
                     gradient[j] += next_grad[j]
 
         for i in range(len(w)):
-            w[i] += gradient * r
+            w[i] += gradient[i] * r
+
+    return w
 
 
-# helper function to find the gradient for a single
+# helper function to find the *negative* gradient for a single
 # element, which is how sgd is defined, or the total
 # gradient is the sum
-def lms_gradient(w, value, label):
+def lms_neg_gradient(w, value, label):
     grad = []
+
+    # w^T \dot value
+    dot_prod = 0
     for i in range(len(value)):
-        grad.append(-(label - w[i]*value[i])*value[i])
+        dot_prod += w[i] * value[i]
+    dot_prod += w[-1]
+
+    for i in range(len(value)):
+        grad.append((label - dot_prod) * value[i])
+
+    grad.append(label - dot_prod)
 
     return grad
-
-
-
-
-
