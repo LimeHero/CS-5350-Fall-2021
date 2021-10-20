@@ -55,6 +55,5 @@ def bank_test():
                                            test_values=test_values, test_labels=test_labels)
 
 
-
 if __name__ == "__main__":
     main()
