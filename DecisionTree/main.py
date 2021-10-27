@@ -6,7 +6,7 @@ import id3
 def main():
     bagged_tree_test(-1)  # normal bagged tree test
     # bagged_tree_test(2)
-    # bagged_tree_test(6)  # random forest tests
+    # bagged_tree_test(4)  # random forest tests
     # bagged_tree_test(6)
     # bagged_variance_test(6)  # normal bagged variance test
     # bagged_variance_test(2)

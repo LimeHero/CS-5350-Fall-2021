@@ -1,8 +1,4 @@
 import ada_boost
-# import sys
-# sys.path.insert(0, '/CS-5350-Fall-2021/DecisionTree/')
-# from DecisionTree import tree
-# from DecisionTree import id3
 
 
 def main():

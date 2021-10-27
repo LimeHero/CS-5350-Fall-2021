@@ -17,13 +17,17 @@ class DecisionNode:
     # with the given attributes.
     #
     # If this node is a leaf node, initializes it with the given label.
-    def __init__(self, is_leaf_node, attribute_int, label):
+    def __init__(self, is_leaf_node, attribute_int, label, is_numeric=False, median=0):
         # next_nodes is a dictionary from attribute values to other nodes in the tree
         # in the case that this node is a leaf node, next_nodes is empty
         self.next_nodes = {}
 
         # stores which attribute this (non-leaf) node is tracking
         self.attribute = 0
+
+        # if this node is numeric, we treat all attributes as "less" or "more" than the median
+        self.is_numeric = is_numeric
+        self.median = median
 
         # if this node is a leaf, this stores the output label
         self.leaf_label = ""
@@ -36,6 +40,7 @@ class DecisionNode:
             self.attribute = attribute_int
 
     # adds a new map for next_nodes
+    # if this node is numeric, value should be "less" or "more"
     def add_mapping(self, value, node):
         self.next_nodes[value] = node
 
@@ -43,7 +48,15 @@ class DecisionNode:
     def evaluate(self, input_data):
         if self.is_leaf_node:
             return self.leaf_label
-        return self.next_nodes[input_data[self.attribute]].evaluate(input_data)
+
+        label = input_data[self.attribute]
+        if self.is_numeric:
+            if label < self.median:
+                label = "less"
+            else:
+                label = "more"
+
+        return self.next_nodes[label].evaluate(input_data)
 
 
 # Essentially a wrapper class for the root node,

@@ -63,7 +63,15 @@ class StumpForest:
 
     # evaluates the weighted vote of the stumps
     # must be a categorical label in this implementation
-    def evaluate(self, values):
+    # print_avg is used *ONLY* if the labels are numerical
+    # and we wish to return the average label value instead of most frequent
+    def evaluate(self, values, print_avg=False):
+        if print_avg:
+            label_sum = 0
+            for i in range(len(self.stumps)):
+                label_sum += self.stumps[i].evaluate(values)
+            return label_sum / len(self.stumps)
+
         label_count = {}
         for i in range(len(self.stumps)):
             label = self.stumps[i].evaluate(values)
@@ -270,6 +278,9 @@ class DecisionStump:
     # Returns this decision stump evaluated on the given list of features
     def evaluate(self, values):
         if not self.is_numeric:
+            # if its not well formed, just pick the first one
+            if values[self.feature] not in self.map.keys():
+                return self.map[list(self.map.keys())[0]]
             return self.map[values[self.feature]]
 
         if values[self.feature] < self.median:

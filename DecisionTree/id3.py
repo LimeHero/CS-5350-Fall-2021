@@ -1,6 +1,6 @@
 import random
 
-import tree
+import DecisionTree.tree as tree
 import numpy as np
 
 
@@ -10,6 +10,9 @@ import numpy as np
 # arrays should be the same length. values should be an array
 # of arrays, each representing the attributes of an example,
 # with the attributes in the same order for each example.
+#
+# if an attribute is to be treated as a numeric value,
+# it should be passed in as a numeric type instead of as a string
 #
 # the gain_function parameter must be one of "gini", "maj error", or "info gain"
 #
@@ -30,16 +33,35 @@ def id3(values, labels, gain_function, max_depth=-1, attr_subset_size=-1, all_at
         for j in range(len(values[0])):
             all_attributes.append(set())
 
-        for i in range(len(values)):
-            for j in range(len(values[0])):
+        for j in range(len(values[0])):
+            if type(values[0][j]) != str:
+                all_attributes[j].add("less")
+                all_attributes[j].add("more")
+                continue
+
+            for i in range(len(values)):
                 all_attributes[j].add(values[i][j])
 
+    medians = []
+    for j in range(len(values[0])):
+        medians.append(0)
+        if type(values[0][j]) == str:
+            continue
+
+        sorted_list = []
+        for i in range(len(values)):
+            sorted_list.append(values[i][j])
+        sorted_list.sort()
+
+        medians[j] = sorted_list[int(len(sorted_list)/2)]
+
     return tree.DecisionTree(
-        __recurs_id3(values, labels, gain_function, max_depth, range(len(values[0])), all_attributes, attr_subset_size))
+        __recurs_id3(values, labels, gain_function, max_depth, range(len(values[0])), all_attributes, attr_subset_size,
+                     medians))
 
 
 # recursive helper function for id3 function
-def __recurs_id3(values, labels, gain_function, max_depth, attributes, attribute_values, attr_subset_size):
+def __recurs_id3(values, labels, gain_function, max_depth, attributes, attribute_values, attr_subset_size, medians):
     label_frequencies = {}
     # calculate label frequencies
     for label in labels:
@@ -81,6 +103,13 @@ def __recurs_id3(values, labels, gain_function, max_depth, attributes, attribute
         # get the frequencies
         for i in range(len(labels)):
             value = values[i][attr]
+
+            if type(value) != str:
+                if value < medians[attr]:
+                    value = "less"
+                else:
+                    value = "more"
+
             if not (value in attr_label_frequencies):
                 attr_label_frequencies[value] = {}
 
@@ -120,7 +149,14 @@ def __recurs_id3(values, labels, gain_function, max_depth, attributes, attribute
             max_gain = gain
             best_attribute = attr
 
-    root = tree.DecisionNode(False, best_attribute, "")
+    # is true if the best attribute is a numeric attribute
+    best_attr_numeric = type(values[0][best_attribute]) != str
+
+    if not best_attr_numeric:
+        root = tree.DecisionNode(False, best_attribute, "")
+    else:
+        root = tree.DecisionNode(False, best_attribute, "", is_numeric=True, median=medians[best_attribute])
+
     # dictionaries that take an attribute value in attr
     # and map to the set S_attr of elements with attribute attr
     values_v = {}
@@ -130,8 +166,15 @@ def __recurs_id3(values, labels, gain_function, max_depth, attributes, attribute
         labels_v[attr_value] = []
 
     for i in range(len(labels)):
-        values_v[values[i][best_attribute]].append(values[i].copy())
-        labels_v[values[i][best_attribute]].append(labels[i])
+        value = values[i][best_attribute]
+        if best_attr_numeric:
+            if value < medians[best_attribute]:
+                value = "less"
+            else:
+                value = "more"
+
+        values_v[value].append(values[i].copy())
+        labels_v[value].append(labels[i])
 
     for attr_value in attribute_values[best_attribute]:
         # if S_V is empty, add a leaf node with most common label
@@ -141,7 +184,7 @@ def __recurs_id3(values, labels, gain_function, max_depth, attributes, attribute
             root.next_nodes[attr_value] = __recurs_id3(values_v[attr_value], labels_v[attr_value],
                                                        gain_function, max_depth - 1,
                                                        [x for x in attributes if x != best_attribute],
-                                                       attribute_values, attr_subset_size)
+                                                       attribute_values, attr_subset_size, medians)
 
     return root
 

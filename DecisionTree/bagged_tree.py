@@ -1,6 +1,5 @@
 import random
-import tree
-import id3
+import DecisionTree.id3 as id3
 
 
 # a simple implementation of a bagged tree
