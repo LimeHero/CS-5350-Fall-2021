@@ -20,7 +20,7 @@ test_train_ratio = .9  # the number of test examples used divided by total examp
 
 
 def main():
-    adaboost_output()
+    bagged_tree_output()
 
 
 # this is a function that runs a test using adaboost on the training data
@@ -42,8 +42,9 @@ def adaboost_output():
     train_values = data[0]
     train_labels = data[1]
     test_values = data[2]
+    print(len(test_values))
 
-    ada_boost_result = EnsembleLearning.ada_boost.ada_boost(train_values, train_labels, "info gain", 200)
+    ada_boost_result = EnsembleLearning.ada_boost.ada_boost(train_values, train_labels, "info gain", 20)
 
     print("ID,Prediction")
     for i in range(len(test_values)):
@@ -58,9 +59,12 @@ def bagged_tree_test():
     test_values = data[2]
     test_labels = data[3]
 
+    all_attributes = get_all_attributes(train_values, test_values)
+
     bagged_result = bagged_tree.BaggedTree()
     bagged_result.initialize_id3(train_values, train_labels, 100, "info gain", len(train_values), print_info=True,
-                                 test_values=test_values, test_labels=test_labels, attr_subset_size=6)
+                                 test_values=test_values, test_labels=test_labels, attr_subset_size=6,
+                                 all_attributes=all_attributes)
 
 
 def bagged_tree_output():
@@ -68,6 +72,37 @@ def bagged_tree_output():
     train_values = data[0]
     train_labels = data[1]
     test_values = data[2]
+
+    all_attributes = get_all_attributes(train_values, test_values)
+
+    bagged_result = bagged_tree.BaggedTree()
+    bagged_result.initialize_id3(train_values, train_labels, 400, "info gain", len(train_values), attr_subset_size=6,
+                                 all_attributes=all_attributes)
+
+    print("ID,Prediction")
+
+    for i in range(len(test_values)):
+        ith_result = bagged_result.evaluate(test_values[i], avg=True)
+        print(str(i + 1) + "," + str(ith_result))
+
+
+def get_all_attributes(train_values, test_values):
+    all_attributes = []
+    for j in range(len(train_values[0])):
+        all_attributes.append(set())
+
+    for j in range(len(train_values[0])):
+        if type(train_values[0][j]) != str:
+            all_attributes[j].add("less")
+            all_attributes[j].add("more")
+            continue
+
+        for i in range(len(train_values)):
+            all_attributes[j].add(train_values[i][j])
+        for i in range(len(test_values)):
+            all_attributes[j].add(test_values[i][j])
+
+    return all_attributes
 
 
 # returns [train_values, train_labels, test_values, test_labels]

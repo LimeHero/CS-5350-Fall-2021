@@ -12,6 +12,21 @@ class BaggedTree:
     # runs id3 repeatedly to form this bagged tree
     def initialize_id3(self, train_values, train_labels, gens, gain_function, m, print_info=False,
                        test_values=None, test_labels=None, attr_subset_size=-1, all_attributes=None):
+
+        if all_attributes is None:
+            all_attributes = []
+            for j in range(len(train_values[0])):
+                all_attributes.append(set())
+
+            for j in range(len(train_values[0])):
+                if type(train_values[0][j]) != str:
+                    all_attributes[j].add("less")
+                    all_attributes[j].add("more")
+                    continue
+
+                for i in range(len(train_values)):
+                    all_attributes[j].add(train_values[i][j])
+
         for gen in range(gens):
             new_value_set = []
             new_label_set = []
@@ -42,7 +57,13 @@ class BaggedTree:
 
                 print(error_count / len(test_labels))
 
-    def evaluate(self, values):
+    def evaluate(self, values, avg=False):
+        if avg:
+            label_sum = 0
+            for i in range(len(self.trees)):
+                label_sum += self.trees[i].evaluate(values)
+            return label_sum / len(self.trees)
+
         label_counts = {}
         for j in range(len(self.trees)):
             label = self.trees[j].evaluate(values)
