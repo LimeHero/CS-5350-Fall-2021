@@ -3,16 +3,16 @@ import numpy as np
 
 
 def main():
-    x_values = [[1, -1, 2],
-                [1, 1, 3],
-                [-1, 1, 0],
-                [1, 2, -4],
-                [3, -1, -1],
-                ]
+    print("gradient test:")
+    lms_test("grad")
+    print()
+    print()
+    print()
+    print("sgd test:")
+    lms_test("sgd")
 
-    x_labels = [1, 4, -1, -2, 0]
 
-    # grad_result = lms.lms(x_values, x_labels, .01, descent_type="grad", print_info=True)
+def lms_test(descent_type):
 
     train_values = []
     train_labels = []
@@ -34,7 +34,7 @@ def main():
                 test_values[-1].append(float(terms[i]))
             test_labels.append(float(terms[-1]))
 
-    grad_result = lms.lms(train_values, train_labels, .005, descent_type="grad", print_info=True)
+    grad_result = lms.lms(train_values, train_labels, .005, descent_type=descent_type, print_info=True)
 
     print("result:")
     print(grad_result)

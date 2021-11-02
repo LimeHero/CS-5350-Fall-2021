@@ -15,7 +15,7 @@ def main():
 
     # stump_forest = ada_boost.ada_boost(x_values, x_labels, "info gain", 50, print_info=False, test_values=x_values,
     #                                    test_labels=x_labels)
-    print("EnsembleLearning Test:")
+    print("AdaBoost Test:")
     bank_test()
 
 

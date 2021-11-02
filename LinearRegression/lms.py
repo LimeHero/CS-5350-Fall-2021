@@ -35,10 +35,7 @@ def lms(values, labels, r, descent_type="sgd", print_info=False):
             dot_prod += w[-1]
             cost += (labels[j] - dot_prod) ** 2
 
-        #if diff < .0000000000000001:
-        #    break
-
-        if cost < 29.965:
+        if cost < 30.5:
             break
 
         if print_info and num_gen % 100 == 0:

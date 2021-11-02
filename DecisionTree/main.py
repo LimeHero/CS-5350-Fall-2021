@@ -4,10 +4,23 @@ import id3
 
 
 def main():
+    print("Bagged Tree Test: ")
     bagged_tree_test(-1)  # normal bagged tree test
-    # bagged_tree_test(2)
-    # bagged_tree_test(4)  # random forest tests
-    # bagged_tree_test(6)
+    print()
+    print()
+    print()
+    print("Random Forest Test, number of attributes = 2: ")
+    bagged_tree_test(2)
+    print()
+    print()
+    print()
+    print("Random Forest Test, number of attributes = 4: ")
+    bagged_tree_test(4)  # random forest tests
+    print()
+    print()
+    print()
+    print("Random Forest Test, number of attributes = 6: ")
+    bagged_tree_test(6)
     # bagged_variance_test(6)  # normal bagged variance test
     # bagged_variance_test(2)
     # bagged_variance_test(4)  # random forest variance test
@@ -250,7 +263,7 @@ def bagged_tree_test(attr_subset_size):
 
     print("Iteration, train accuracy, test accuracy")
     bagged_result = bagged_tree.BaggedTree()
-    bagged_result.initialize_id3(train_values, train_labels, 500, "info gain", len(train_values), print_info=True,
+    bagged_result.initialize_id3(train_values, train_labels, 100, "info gain", len(train_values), print_info=True,
                                  test_values=test_values, test_labels=test_labels, attr_subset_size=attr_subset_size)
 
 
