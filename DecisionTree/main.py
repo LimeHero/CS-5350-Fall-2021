@@ -7,6 +7,9 @@ def main():
     print("Bagged Tree Test: ")
     bagged_tree_test(-1)  # normal bagged tree test
     print()
+
+
+
     print()
     print()
     print("Random Forest Test, number of attributes = 2: ")

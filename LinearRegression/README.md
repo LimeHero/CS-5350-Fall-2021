@@ -18,7 +18,7 @@ The parameters are:
     r: learning rate.
 
     descent_type: must be one of "sgd" or "grad", for stochastic and regular
-    gradient descent. Default value is "sgd"
+    gradient descent. Default value is "sgd".
 
     (optional) print_info: will print updates if set to true
 
