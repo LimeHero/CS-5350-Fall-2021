@@ -4,8 +4,17 @@ import numpy as np
 
 def main():
     print("SVM main function.")
-    bank_note_test_dual()
+    # np_testing()
+    bank_note_test_sgd()
+    bank_note_test_dot(True)
 
+
+# to help my understanding of np functions
+def np_testing():
+    myw = np.array([0.] * 4)
+
+    myw += 4. * 2. * np.array([.5, .2, .1, .2])
+    print(myw)
     values = [[1, 0], [0, 1], [1, 1]]
     labels = [1, -1, 1]
 
@@ -65,7 +74,7 @@ def bank_note_test_sgd():
     def learning_schedule(initial, t):
         return initial / (1 + (a / initial) * t)
 
-    for learn_sched in range(2):
+    for learn_sched in range(1):
         for c in [100 / 873, 500 / 873, 700 / 873]:
             if learn_sched == 0:
                 svm_result = SVM.svm_sgd(train_values, train_labels, 100, c, 5, learning_schedule=learning_schedule)
@@ -87,6 +96,7 @@ def bank_note_test_sgd():
             else:
                 print("linear learning schedule")
 
+            print("vector values: " + str(svm_result.vector))
             print("c = " + str(c))
             print("average train error: " + str(incorrect_train_label_count / len(train_labels)))
             print("average test error: " + str(incorrect_label_count / len(test_labels)))
@@ -94,7 +104,7 @@ def bank_note_test_sgd():
             print()
 
 
-def bank_note_test_dual():
+def bank_note_test_dot(use_gaussian):
     train_values = []
     train_labels = []
     with open("Data/bank_note/train.csv", 'r') as f:
@@ -115,29 +125,44 @@ def bank_note_test_dual():
                 test_values[-1].append(float(terms[i]))
             test_labels.append(2 * float(terms[-1]) - 1.)  # so the labels are +- 1
 
-    for c in [100 / 873, 500 / 873, 700 / 873]:
+    prev_supp_vectors = None
+    for gamma in [0.1, 0.5, 1., 5., 100.]:
+        for c in [100 / 873, 500 / 873, 700 / 873]:
 
-        gamma = 1
+            # takes in two numpy arrays and returns their gaussian product
+            def gaussian_kernel(x, y):
+                return np.exp(- np.dot(x - y, x - y) / gamma)
 
-        # takes in two numpy arrays and returns their gaussian product
-        def gaussian_kernel(x, y):
-            np.exp(- np.dot(x - y, x - y) / gamma)
+            if use_gaussian:
+                svm_result = SVM.svm(train_values, train_labels, c, kernel=gaussian_kernel)
+            else:
+                svm_result = SVM.svm(train_values, train_labels, c)
 
-        svm_result = SVM.svm(train_values, train_labels, c)
+            incorrect_label_count = 0
+            for i in range(len(test_labels)):
+                if svm_result.evaluate(test_values[i]) != test_labels[i]:
+                    incorrect_label_count += 1
 
-        incorrect_label_count = 0
-        for i in range(len(test_labels)):
-            if svm_result.evaluate(test_values[i]) != test_labels[i]:
-                incorrect_label_count += 1
+            incorrect_train_label_count = 0
+            for i in range(len(train_labels)):
+                if svm_result.evaluate(train_values[i]) != train_labels[i]:
+                    incorrect_train_label_count += 1
 
-        incorrect_train_label_count = 0
-        for i in range(len(train_labels)):
-            if svm_result.evaluate(train_values[i]) != train_labels[i]:
-                incorrect_train_label_count += 1
-
-        print("c = " + str(c))
-        print("average train error: " + str(incorrect_train_label_count / len(train_labels)))
-        print("average test error: " + str(incorrect_label_count / len(test_labels)))
+            if prev_supp_vectors is not None and -.1 < c - 500/873 < .1:
+                count = 0
+                for i in range(len(prev_supp_vectors)):
+                    if prev_supp_vectors[i] in svm_result.vector:
+                        count += 1
+                print("num same supp vectors: " + str(count))
+            print("gamma: " + str(gamma))
+            print("num supp vectors: " + str(len(svm_result.vector)))
+            print("c = " + str(c))
+            print("average train error: " + str(incorrect_train_label_count / len(train_labels)))
+            print("average test error: " + str(incorrect_label_count / len(test_labels)))
+            print()
+            print()
+            if -.1 < c - 500/873 < .1:
+                prev_supp_vectors = svm_result.vector
 
 
 if __name__ == "__main__":

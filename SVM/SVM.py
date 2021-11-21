@@ -91,16 +91,12 @@ def svm_sgd(values, labels, num_epochs, c, initial_learn, learning_schedule=line
 # the kernel should be a function that takes in two float vectors and returns
 # a float. The default value is np.dot, which corresponds to when there is no
 # non-linearization, so it is the default svm algorithm.
-#
-# prints information as the algorithm runs if print_info=True.
-def svm(values, labels, c, kernel=np.dot, print_info=False):
+def svm(values, labels, c, kernel=np.dot):
     values = values.copy()
     labels = labels.copy()
 
     # to minimize cost of computing objective function
-    X = np.array(values)
-    Y = np.array(labels)
-    xy_xyt = np.array([kernel(xi, xj) for xi in values for xj in values])
+    xy_xyt = np.array([kernel(np.array(xi), np.array(xj)) for xi in values for xj in values])
     xy_xyt = xy_xyt.reshape((len(values), len(values)))
     xy_xyt = (np.array(labels) * (xy_xyt * np.array(labels)).T)
 
@@ -125,29 +121,56 @@ def svm(values, labels, c, kernel=np.dot, print_info=False):
         raise Exception(solution.message)
 
     opt_alphas = solution.x
-    print(opt_alphas)
+
+    # the solution can be made a bit simpler if the kernel is the dot product
+    if kernel == np.dot:
+        w = np.array([0.]*len(values[0]))
+
+        for i in range(len(opt_alphas)):
+            if opt_alphas[i] < .000_000_0001:
+                opt_alphas[i] = 0
+
+            w += opt_alphas[i]*labels[i]*np.array(values[i])
+
+        opt_b = 0
+        num_b_values = 0
+        for i in range(len(opt_alphas)):
+            if 0 < opt_alphas[i] <= c:
+                opt_b += labels[i] - np.dot(w, values[i])
+                num_b_values+=1
+
+        if num_b_values != 0:
+            opt_b /= num_b_values
+
+        w = np.append(w, opt_b)
+        return LinearClassifier(w)
+
+    # now, if the kernel is not the dot product, we have:
     num_b_values = 0
     supp_vecs = []
     supp_alphas = []
+    # TODO: remove this (only for seeing how many supp vecs are repeated)
+    supp_indexes = []
     opt_b = 0
     for i in range(len(opt_alphas)):
         if opt_alphas[i] < .000_000_0001:
             opt_alphas[i] = 0
 
         if 0 < opt_alphas[i] <= c:
-            value_sum = 0
             supp_vecs.append(values[i].copy())
             supp_alphas.append(opt_alphas[i] * labels[i])
+            supp_indexes.append(i)
+
+            value_sum = 0
             for j in range(len(values)):
-                value_sum += opt_alphas[j] * labels[j] * kernel(values[i], values[j])
+                value_sum += opt_alphas[j] * labels[j] * kernel(np.array(values[i]), np.array(values[j]))
             opt_b += labels[i] - value_sum
-            print(str(labels[i] - value_sum))
             num_b_values += 1
 
-        if num_b_values != 0:
-            opt_b /= num_b_values
+    if num_b_values != 0:
+        opt_b /= num_b_values
 
-    return LinearClassifier(None, kernel=kernel, support_vectors=supp_vecs, vector_coefficients=supp_alphas,
+    return LinearClassifier(supp_indexes, kernel=kernel, support_vectors=supp_vecs, vector_coefficients=supp_alphas,
                             bias_term=opt_b)
 
 
@@ -188,7 +211,8 @@ class LinearClassifier:
             result = np.dot(self.vector, _temp_value)
         else:
             for i in range(len(self.support_vectors)):
-                result += self.vector_coefficients[i] * self.kernel(self.support_vectors[i], _temp_value)
+                result += self.vector_coefficients[i] * self.kernel(np.array(self.support_vectors[i]),
+                                                                    np.array(_temp_value))
             result += self.bias_term
 
         if result >= 0:
