@@ -59,7 +59,7 @@ def svm_sgd(values, labels, num_epochs, c, initial_learn, learning_schedule=line
 
             # stochastic sub gradient of loss function
             sub_grad = w.copy()
-            sub_grad[len(w)-1] = 0
+            sub_grad[len(w) - 1] = 0
             if label * np.dot(w, value) < 1:
                 sub_grad -= c * len(values) * label * np.array(value)
 
@@ -97,16 +97,17 @@ def svm(values, labels, c, kernel=np.dot, print_info=False):
     values = values.copy()
     labels = labels.copy()
 
+    # to minimize cost of computing objective function
+    X = np.array(values)
+    Y = np.array(labels)
+    xy_xyt = np.array([kernel(xi, xj) for xi in values for xj in values])
+    xy_xyt = xy_xyt.reshape((len(values), len(values)))
+    xy_xyt = (np.array(labels) * (xy_xyt * np.array(labels)).T)
+
     # to solve the dual form, this is the function we must minimize
     def objective_function(alphas):
-        if kernel == np.dot:
-            modified_value_matrix = np.matmul(np.matmul(np.diag(labels), np.diag(alphas)), values)
-            return 1 / 2 * np.matmul(modified_value_matrix, np.transpose(modified_value_matrix)).sum() - np.sum(alphas)
-
-        kernel_applied_matrix = np.array([kernel(xi, xj) for xi in values for xj in values])
-        kernel_applied_matrix = kernel_applied_matrix.reshape((len(values), len(values)))
-        diag_matrix = np.matmul(np.diag(labels), np.diag(alphas))
-        return 1 / 2 * np.matmul(diag_matrix, np.matmul(kernel_applied_matrix, diag_matrix)).sum() - np.sum(alphas)
+        s = 1 / 2 * (alphas * (xy_xyt * alphas).T).sum() - alphas.sum()
+        return s
 
     # constraint on the alphas: we must have sum \alpha_i y_i = 0
     def constraint(alphas):
@@ -116,24 +117,38 @@ def svm(values, labels, c, kernel=np.dot, print_info=False):
     bounds = [(0, c)] * len(labels)
     constraints = {'type': 'eq', 'fun': constraint}
 
-    x0 = np.array([1]*len(labels))
+    x0 = np.array([0] * len(labels))
     solution = minimize(fun=objective_function, x0=x0, method="SLSQP", constraints=constraints, bounds=bounds)
+
     if not solution.success:
         print("Error with scipy.optimize.minimize:")
         raise Exception(solution.message)
 
     opt_alphas = solution.x
+    print(opt_alphas)
     num_b_values = 0
+    supp_vecs = []
+    supp_alphas = []
     opt_b = 0
-    w = np.matmul(np.matmul(np.diag(opt_alphas), np.diag(labels)), values)
     for i in range(len(opt_alphas)):
-        if 0 < opt_alphas[i] < c:
-            opt_b = labels[i] - np.dot(w, values[i]).sum()
+        if opt_alphas[i] < .000_000_0001:
+            opt_alphas[i] = 0
+
+        if 0 < opt_alphas[i] <= c:
+            value_sum = 0
+            supp_vecs.append(values[i].copy())
+            supp_alphas.append(opt_alphas[i] * labels[i])
+            for j in range(len(values)):
+                value_sum += opt_alphas[j] * labels[j] * kernel(values[i], values[j])
+            opt_b += labels[i] - value_sum
+            print(str(labels[i] - value_sum))
             num_b_values += 1
 
-        opt_b /= num_b_values
+        if num_b_values != 0:
+            opt_b /= num_b_values
 
-    return LinearClassifier(None, kernel=kernel, kernel_vectors=w, bias_term=opt_b)
+    return LinearClassifier(None, kernel=kernel, support_vectors=supp_vecs, vector_coefficients=supp_alphas,
+                            bias_term=opt_b)
 
 
 # A simple class that is returned by the SVM algorithm.
@@ -151,13 +166,14 @@ class LinearClassifier:
     # kernel_vectors must be a list of vectors x to apply on each example
     # bias_term is incorporated for the non-linear classifier. The bias should be
     # included in the vector for the standard linear classifier.
-    def __init__(self, vector, kernel=None, kernel_vectors=None, bias_term=None):
+    def __init__(self, vector, kernel=None, support_vectors=None, vector_coefficients=None, bias_term=None):
         self.vector = vector
         self.kernel = kernel
 
         if kernel is not None:
             self.bias_term = bias_term
-            self.kernel_vectors = kernel_vectors
+            self.support_vectors = support_vectors
+            self.vector_coefficients = vector_coefficients
 
     # Evaluates this set of linear classifiers on the given array value
     # we assume the bias term is NOT included
@@ -171,8 +187,9 @@ class LinearClassifier:
             _temp_value.append(1)
             result = np.dot(self.vector, _temp_value)
         else:
-            for vector in self.kernel_vectors:
-                result += self.kernel(vector, _temp_value) + self.bias_term
+            for i in range(len(self.support_vectors)):
+                result += self.vector_coefficients[i] * self.kernel(self.support_vectors[i], _temp_value)
+            result += self.bias_term
 
         if result >= 0:
             return 1

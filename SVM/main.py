@@ -6,6 +6,23 @@ def main():
     print("SVM main function.")
     bank_note_test_dual()
 
+    values = [[1, 0], [0, 1], [1, 1]]
+    labels = [1, -1, 1]
+
+    xy_xyt = np.array([np.dot(xi, xj) for xi in values for xj in values])
+    print(xy_xyt)
+    xy_xyt = xy_xyt.reshape((len(values), len(values)))
+    print(xy_xyt)
+
+    xy_xyt = (np.array(labels) * (xy_xyt * np.array(labels)).T)
+    print(xy_xyt)
+
+    alphas = np.array([1, 2, 3])
+    xy_xyt = (np.array(alphas) * (xy_xyt * np.array(alphas)).T)
+    print(xy_xyt)
+
+    print(xy_xyt.sum())
+
 
 def sgd_test():
     values = [[.5, -1, .3],
@@ -104,7 +121,7 @@ def bank_note_test_dual():
 
         # takes in two numpy arrays and returns their gaussian product
         def gaussian_kernel(x, y):
-            np.exp(- np.dot(x, y) / gamma)
+            np.exp(- np.dot(x - y, x - y) / gamma)
 
         svm_result = SVM.svm(train_values, train_labels, c)
 
