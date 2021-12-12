@@ -149,7 +149,6 @@ def svm(values, labels, c, kernel=np.dot):
     num_b_values = 0
     supp_vecs = []
     supp_alphas = []
-    # TODO: remove this (only for seeing how many supp vecs are repeated)
     supp_indexes = []
     opt_b = 0
     for i in range(len(opt_alphas)):
