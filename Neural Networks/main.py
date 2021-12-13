@@ -10,11 +10,12 @@ def main():
     bank_note_test()
 
 
-def identity(x):
-    return x
-
-
+# simple written test to make sure nn.evaluate() is working
 def forward_pass_test():
+
+    def identity(x):
+        return x
+
     nn = neural_network.NeuralNetwork(3, 2, 2, identity)
     nn.weights[0][0][0] = -1.
     nn.weights[0][1][0] = 2.
@@ -45,6 +46,7 @@ def paper_problem_test():
     nn = nn_sgd.nn_sgd(values, labels, 1, [3, 2], 1)
 
 
+# runs desired tests for hw5
 def bank_note_test():
     train_values = []
     train_labels = []

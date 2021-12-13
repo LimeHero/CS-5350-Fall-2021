@@ -15,7 +15,7 @@ The parameters are:
     labels: corresponding labels to the training values in the same
     order. labels MUST be an array of the values {-1, 1}. 
 
-    num_epochs: number of epochs to run perceptron on.
+    num_epochs: number of epochs to run SVM on.
 
     c: a model parameter that changes how much SVM will value 
     training accuracy (higher value of c) versus more functional

@@ -40,8 +40,8 @@ def sigmoid_derivative(t):
 # convergence is the value that the difference of the objective function must reach to terminate.
 # The loss function we are optimizing is least mean squares, so sum (y-y^i)^2.
 #
-# the nn_dimensions parameter should be a an array of the form [a,b], where a is the width
-# of the neural network and b is the number of layers
+# the nn_dimensions parameter should be a an array of the form [a,b], where a is the number of layers
+# of the neural network and b is the width
 #
 # the variable initial_learn is how quickly the algorithm will learn (update weights) on each
 # iteration at the first iteration. The learning_schedule parameter should be a *function*
@@ -60,7 +60,8 @@ def nn_sgd(values, labels, convergence, nn_dimensions, initial_learn, learning_s
 
     nn = neural_network.NeuralNetwork(layers, width, len(values[0]), activation_function)
 
-    # choose nn weights
+    # choose nn weights randomly by gaussian distribution
+    # there are PROBABLY better things to do here
     for i in range(len(nn.weights)):
         for j in range(len(nn.weights[i])):
             for k in range(len(nn.weights[i][j])):
@@ -101,7 +102,7 @@ def nn_sgd(values, labels, convergence, nn_dimensions, initial_learn, learning_s
         shuffle_values.append(i)
 
     for epoch in range(100_000):
-
+        # calculate loss
         loss = 0
         for i in range(len(labels)):
             loss += (nn.evaluate(values[i]) - labels[i]) ** 2 / 2
@@ -111,6 +112,7 @@ def nn_sgd(values, labels, convergence, nn_dimensions, initial_learn, learning_s
             print("loss: " + str(loss))
             print()
 
+        # return if the loss is converging
         if np.abs(loss - prev_loss) < convergence and prev_loss >= 0:
             break
 
@@ -129,6 +131,7 @@ def nn_sgd(values, labels, convergence, nn_dimensions, initial_learn, learning_s
             values[i] = _temp_values[i]
             labels[i] = _temp_labels[i]
 
+        # compute gradient and subtract
         for i in range(len(labels)):
             back_propagation(nn, values[i], labels[i], activation_derivative,
                              nn_dimensions, node_gradient, weight_gradient)
@@ -149,6 +152,7 @@ def back_propagation(nn, value, label, activation_derivative, nn_dimensions, nod
     layers = nn_dimensions[0]
     width = nn_dimensions[1]
 
+    # reset the gradients
     for i in range(len(node_gradient)):
         node_gradient[i].fill(0.)
 
@@ -177,7 +181,7 @@ def back_propagation(nn, value, label, activation_derivative, nn_dimensions, nod
             for j in range(width):
                 partial_derivative.append(node_gradient[layer][j] * activation_derivative(nn.s_values[layer][j]))
 
-        # we don't need to calculate node_gradient on the last step
+        # we don't need to calculate node_gradient[layer-1] when layer = 0
         if layer == 0:
             value_with_bias = value.copy()
             value_with_bias.append(1)
@@ -187,6 +191,7 @@ def back_propagation(nn, value, label, activation_derivative, nn_dimensions, nod
 
             continue
 
+        # compute the gradients
         shape = (width + 1, width)
         if layer == layers - 1:
             shape = (width + 1, 1)
