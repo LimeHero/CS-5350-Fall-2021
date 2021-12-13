@@ -1,11 +1,42 @@
 import random
 import numpy as np
 import nn_sgd
+import neural_network
 
 
 def main():
+    # forward_pass_test()
     # paper_problem_test()
     bank_note_test()
+
+
+def identity(x):
+    return x
+
+
+def forward_pass_test():
+    nn = neural_network.NeuralNetwork(3, 2, 2, identity)
+    nn.weights[0][0][0] = -1.
+    nn.weights[0][1][0] = 2.
+    nn.weights[0][2][0] = -1.
+
+    nn.weights[0][0][1] = 2.
+    nn.weights[0][1][1] = 1.
+    nn.weights[0][2][1] = -1.
+
+    nn.weights[1][0][0] = -1.
+    nn.weights[1][1][0] = 2.
+    nn.weights[1][2][0] = 3.
+
+    nn.weights[1][0][1] = 1.
+    nn.weights[1][1][1] = -1.
+    nn.weights[1][2][1] = 0.
+
+    nn.weights[2][0][0] = 2
+    nn.weights[2][1][0] = 1
+    nn.weights[2][2][0] = -1
+
+    print(nn.evaluate([1, 1]))
 
 
 def paper_problem_test():
@@ -35,30 +66,28 @@ def bank_note_test():
                 test_values[-1].append(float(terms[i]))
             test_labels.append(2 * float(terms[-1]) - 1.)  # so the labels are +- 1
 
-    d = 10
+    d = 20.
 
     # desired learning schedule
     def learning_schedule(initial, t):
         return initial / (1 + (initial / d) * t)
 
     layers = 3
-    for width in [5]:
-        num_epochs = 10
-        initial_learn = 50
-        nn = nn_sgd.nn_sgd(train_values, train_labels, num_epochs, [layers, width], initial_learn, print_info=True)
-
-        incorrect_label_count = 0
-        for i in range(len(test_labels)):
-            if nn.evaluate(test_values[i]) != test_labels[i]:
-                incorrect_label_count += 1
+    for width in [5, 10, 25, 50, 100]:
+        convergence = .2
+        initial_learn = .5
+        nn = nn_sgd.nn_sgd(train_values, train_labels, convergence, [layers, width], initial_learn, print_info=False)
 
         incorrect_train_label_count = 0
         for i in range(len(train_labels)):
-            if nn.evaluate(train_values[i]) != train_labels[i]:
-                incorrect_train_label_count += 1
+            incorrect_train_label_count += nn.evaluate(train_values[i]) * train_labels[i] < 0
+
+        incorrect_label_count = 0
+        for i in range(len(test_labels)):
+            incorrect_label_count += nn.evaluate(test_values[i]) * test_labels[i] < 0
 
         print("width: " + str(width))
-        print("incorrect_train_label_count: " + str(incorrect_label_count))
+        print("incorrect_train_label_count: " + str(incorrect_train_label_count))
         print("incorrect_label_count: " + str(incorrect_label_count))
         print("average train error: " + str(incorrect_train_label_count / len(train_labels)))
         print("average test error: " + str(incorrect_label_count / len(test_labels)))

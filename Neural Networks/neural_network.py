@@ -1,3 +1,6 @@
+import numpy as np
+
+
 # A class for a fully connected neural network
 # with an arbitrary number of layers, width (number of nodes in each layer)
 # and input_width (width of input vector / base layer). will return a float
@@ -31,13 +34,14 @@ class NeuralNetwork:
                     self.weights[i].append([])
 
             # final layer has different width (1)
-            if i == layers - 1:
-                for j in range(len(self.weights[i])):
-                    self.weights[i][j].append(0)
-            else:
-                for j in range(len(self.weights[i])):
+            for j in range(len(self.weights[i])):
+                if i == layers - 1:
+                    self.weights[i][j].append(0.)
+                else:
                     for k in range(width):
-                        self.weights[i][j].append(0)
+                        self.weights[i][j].append(0.)
+            self.weights[i] = np.array(self.weights[i])
+        self.weights = np.array(self.weights, dtype=object)
 
         # when evaluate is called, values of each node are temporarily
         # stored in self.nodes to (greatly) reduce computation when learning
@@ -53,45 +57,43 @@ class NeuralNetwork:
 
             # final result node (output)
             if i == layers - 1:
-                self.nodes[i].append(1)
-                self.s_values[i].append(1)
+                self.nodes[i].append(1.)
+                self.s_values[i].append(1.)
             else:
-                for j in range(width+1):
-                    self.nodes[i].append(1)
-                    self.s_values[i].append(1)
+                for j in range(width):
+                    self.nodes[i].append(1.)
+                    self.s_values[i].append(1.)
+                self.nodes[i].append(1.)  # bias term
+
+            self.nodes[i] = np.array(self.nodes[i])
+            self.s_values[i] = np.array(self.s_values[i])
 
     # evaluates the nn at the given value.
     # ALSO temporarily stores the values of each node in the self.nodes matrix
     def evaluate(self, value):
-        # resets node values
-        for i in range(len(self.nodes)):
-            for j in range(len(self.nodes[i])):
-                self.s_values[i][j] = 0
+        for layer in range(len(self.nodes)):
+            for node in range(len(self.s_values[layer])):
+                # resets node values
+                self.s_values[layer][node] = 0.0
 
-        for i in range(len(self.nodes)):
-            for node in range(len(self.nodes[i])):
-                # no need to compute for bias terms
-                if node == len(self.nodes[i]) - 1 and i != len(self.nodes)-1:
-                    continue
+        value_with_bias = value.copy()
+        value_with_bias.append(1)
+        value_with_bias = np.array(value_with_bias)
 
-                if i == 0:
-                    for j in range(len(value)):
-                        self.s_values[i][node] += self.weights[i][j][node]*value[j]
-                    self.s_values[i][node] += self.weights[i][len(value)][node]
+        for layer in range(len(self.nodes)):
+            if layer == 0:
+                self.s_values[layer] = np.matmul(value_with_bias, self.weights[layer])
+            else:
+                self.s_values[layer] = np.matmul(self.nodes[layer-1], self.weights[layer])
+
+            for node in range(len(self.s_values[layer])):
+                if layer != len(self.nodes)-1:
+                    self.nodes[layer][node] = self.activate(self.s_values[layer][node])
                 else:
-                    for j in range(len(self.nodes[i-1])):
-                        self.s_values[i][node] += self.weights[i][j][node]*self.nodes[i-1][j]
+                    self.nodes[layer][node] = self.s_values[layer][node]
 
-                if i != len(self.nodes)-1:
-                    self.nodes[i][node] = self.activate(self.s_values[i][node])
-                else:
-                    self.nodes[i][node] = self.s_values[i][node]
-
-        return self.nodes[len(self.nodes)-1][0] > 0
+        return self.nodes[len(self.nodes)-1][0]
 
     # adds a value to each weight
     def increment_weights(self, increment, scalar=1):
-        for i in range(len(self.weights)):
-            for j in range(len(self.weights[i])):
-                for k in range(len(self.weights[i][j])):
-                    self.weights[i][j][k] += scalar * increment[i][j][k]
+        self.weights += scalar * increment
